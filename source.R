@@ -4,6 +4,9 @@ library(data.table)
 library(patchwork)
 library(lme4)
 
+dir.create("data", showWarnings = FALSE)
+dir.create("fig", showWarnings = FALSE)
+
 theme_set(
   theme_classic() +
     theme(legend.title = element_blank(),
