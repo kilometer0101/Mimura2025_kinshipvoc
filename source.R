@@ -13,6 +13,89 @@ theme_set(
           strip.background = element_rect(color = NA))
 )
 
+arrange_ngram <- function(data, .bin = 30){
+  data %>% 
+    group_by(type, Name, Stage, Age, PW, PM) %>% 
+    mutate(p1_calltype = lead(calltype),
+           p1_start = lead(start),
+           p1_end = lead(end),
+           p1_ici = p1_start - end)  %>% 
+    mutate(p2_calltype = lead(p1_calltype),
+           p2_start = lead(p1_start),
+           p2_end = lead(p1_end),
+           p2_ici = p2_start - p1_end)   %>% 
+    mutate(p3_calltype = lead(p2_calltype),
+           p3_start = lead(p2_start),
+           p3_end = lead(p2_end),
+           p3_ici = p3_start - p2_end)   %>% 
+    mutate(p4_calltype = lead(p3_calltype),
+           p4_start = lead(p3_start),
+           p4_end = lead(p3_end),
+           p4_ici = p4_start - p3_end) %>% 
+    mutate(p5_calltype = lead(p4_calltype),
+           p5_start = lead(p4_start),
+           p5_end = lead(p4_end),
+           p5_ici = p5_start - p4_end) %>%   
+    group_nest() %>% 
+    mutate(gram1 = map(data, \(x){
+      x %>% 
+        group_nest(calltype) %>% 
+        mutate(n = map_dbl(data, nrow)) %>% 
+        select(!data) %>% 
+        rename(key = calltype)
+    })) %>% 
+    mutate(gram2 = map(data, \(x){
+      x %>% 
+        filter(p1_ici <= .bin) %>% 
+        mutate(key = str_c(p1_calltype, "-", calltype)) %>% 
+        group_nest(key) %>% 
+        mutate(n = map_dbl(data, nrow)) %>% 
+        select(!data)
+    })) %>% 
+    mutate(gram3 = map(data, \(x){
+      x %>% 
+        filter(p1_ici <= .bin) %>% 
+        filter(p2_ici <= .bin) %>% 
+        mutate(key = str_c(p2_calltype, "-", p1_calltype, "-", calltype)) %>% 
+        group_nest(key) %>% 
+        mutate(n = map_dbl(data, nrow)) %>% 
+        select(!data)
+    })) %>% 
+    mutate(gram4 = map(data, \(x){
+      x %>% 
+        filter(p1_ici <= .bin) %>% 
+        filter(p2_ici <= .bin) %>% 
+        filter(p3_ici <= .bin) %>% 
+        mutate(key = str_c(p3_calltype, "-", p2_calltype, "-", p1_calltype, "-", calltype)) %>% 
+        group_nest(key) %>% 
+        mutate(n = map_dbl(data, nrow)) %>% 
+        select(!data)
+    })) %>% 
+    mutate(gram5 = map(data, \(x){
+      x %>% 
+        filter(p1_ici <= .bin) %>% 
+        filter(p2_ici <= .bin) %>% 
+        filter(p3_ici <= .bin) %>% 
+        filter(p4_ici <= .bin) %>% 
+        mutate(key = str_c(p4_calltype, "-", p3_calltype, "-", p2_calltype, "-", p1_calltype, "-", calltype)) %>% 
+        group_nest(key) %>% 
+        mutate(n = map_dbl(data, nrow)) %>% 
+        select(!data)
+    })) %>% 
+    mutate(gram6 = map(data, \(x){
+      x %>% 
+        filter(p1_ici <= .bin) %>% 
+        filter(p2_ici <= .bin) %>% 
+        filter(p3_ici <= .bin) %>% 
+        filter(p4_ici <= .bin) %>% 
+        filter(p5_ici <= .bin) %>% 
+        mutate(key = str_c(p5_calltype, "-",p4_calltype, "-", p3_calltype, "-", p2_calltype, "-", p1_calltype, "-", calltype)) %>% 
+        group_nest(key) %>% 
+        mutate(n = map_dbl(data, nrow)) %>% 
+        select(!data)
+    }))
+}
+
 
 
 sep_lowhigh <- function(dat, .key){

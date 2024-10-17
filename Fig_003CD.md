@@ -34,85 +34,7 @@ dat_raw <-
 ```r
 dat_ngram <-
   dat_raw %>% 
-  group_by(type, Name, Stage, Age, PW, PM) %>% 
-  mutate(p1_calltype = lead(calltype),
-         p1_start = lead(start),
-         p1_end = lead(end),
-         p1_ici = p1_start - end)  %>% 
-  mutate(p2_calltype = lead(p1_calltype),
-         p2_start = lead(p1_start),
-         p2_end = lead(p1_end),
-         p2_ici = p2_start - p1_end)   %>% 
-  mutate(p3_calltype = lead(p2_calltype),
-         p3_start = lead(p2_start),
-         p3_end = lead(p2_end),
-         p3_ici = p3_start - p2_end)   %>% 
-  mutate(p4_calltype = lead(p3_calltype),
-         p4_start = lead(p3_start),
-         p4_end = lead(p3_end),
-         p4_ici = p4_start - p3_end) %>% 
-  mutate(p5_calltype = lead(p4_calltype),
-         p5_start = lead(p4_start),
-         p5_end = lead(p4_end),
-         p5_ici = p5_start - p4_end) %>%   
-  group_nest() %>% 
-  mutate(gram1 = map(data, \(x){
-    x %>% 
-      group_nest(calltype) %>% 
-      mutate(n = map_dbl(data, nrow)) %>% 
-      select(!data) %>% 
-      rename(key = calltype)
-  })) %>% 
-  mutate(gram2 = map(data, \(x){
-    x %>% 
-      filter(p1_ici <= .bin) %>% 
-      mutate(key = str_c(p1_calltype, "-", calltype)) %>% 
-      group_nest(key) %>% 
-      mutate(n = map_dbl(data, nrow)) %>% 
-      select(!data)
-  })) %>% 
-  mutate(gram3 = map(data, \(x){
-    x %>% 
-      filter(p1_ici <= .bin) %>% 
-      filter(p2_ici <= .bin) %>% 
-      mutate(key = str_c(p2_calltype, "-", p1_calltype, "-", calltype)) %>% 
-      group_nest(key) %>% 
-      mutate(n = map_dbl(data, nrow)) %>% 
-      select(!data)
-  })) %>% 
-  mutate(gram4 = map(data, \(x){
-    x %>% 
-      filter(p1_ici <= .bin) %>% 
-      filter(p2_ici <= .bin) %>% 
-      filter(p3_ici <= .bin) %>% 
-      mutate(key = str_c(p3_calltype, "-", p2_calltype, "-", p1_calltype, "-", calltype)) %>% 
-      group_nest(key) %>% 
-      mutate(n = map_dbl(data, nrow)) %>% 
-      select(!data)
-  }))%>% 
-  mutate(gram5 = map(data, \(x){
-    x %>% 
-      filter(p1_ici <= .bin) %>% 
-      filter(p2_ici <= .bin) %>% 
-      filter(p3_ici <= .bin) %>% 
-      filter(p4_ici <= .bin) %>% 
-      mutate(key = str_c(p4_calltype, "-", p3_calltype, "-", p2_calltype, "-", p1_calltype, "-", calltype)) %>% 
-      group_nest(key) %>% 
-      mutate(n = map_dbl(data, nrow)) %>% 
-      select(!data)
-  }))%>% 
-  mutate(gram6 = map(data, \(x){
-    x %>% 
-      filter(p1_ici <= .bin) %>% 
-      filter(p2_ici <= .bin) %>% 
-      filter(p3_ici <= .bin) %>% 
-      filter(p4_ici <= .bin) %>% 
-      filter(p5_ici <= .bin) %>% 
-      mutate(key = str_c(p5_calltype, "-",p4_calltype, "-", p3_calltype, "-", p2_calltype, "-", p1_calltype, "-", calltype)) %>% 
-      group_nest(key) %>% 
-      mutate(n = map_dbl(data, nrow)) %>% 
-      select(!data)
-  }))
+  arrange_ngram()
 ```
 
 
@@ -210,12 +132,12 @@ g_jsd <-
   geom_boxplot(aes(color = type, fill = type), alpha = 0.25) +
   scale_fill_manual(values = c(UE = "black", VPA = "red")) +
   scale_color_manual(values = c(UE = "black", VPA = "red")) +
-  facet_wrap(~key) +
+  facet_wrap(~key, ncol = 1) +
   theme(axis.title.x = element_blank(),
         axis.text.x = element_text(angle = 45,
                                    hjust = 1)) +
   scale_y_continuous(breaks = c(0, 0.5, 1),
-                     limits = c(0, 1))
+                     limits = c(0, 1.1))
 
 g_jsd
 ```
@@ -223,16 +145,17 @@ g_jsd
 ![](Fig_003CD_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 ```r
-ggsave("fig/fig_3DC.png", width = 10, height = 5)
+ggsave("fig/fig_3DC.png", width = 5, height = 5)
 
-ggsave("fig/fig_3DC.svg", width = 7, height = 3)
+ggsave("fig/fig_3DC.svg", width = 5, height = 5)
 ```
 
 - stat with Brunner-Munzel test
 
 
 ```r
-dat_ngram_rr %>% 
+dat_stat <-
+  dat_ngram_rr %>% 
   mutate(key = str_c(PM_1, " vs. ", PM_2)) %>% 
   filter(key != "1-2.5 m vs. 4-5.5 m") %>% 
   group_nest(model, key, type) %>% 
@@ -243,24 +166,48 @@ dat_ngram_rr %>%
   })) %>% 
   mutate(p = map_dbl(stat, ~.$p.value)) %>% 
   arrange(key, model)
+
+dat_stat %>% filter(p < 0.05) %>%  .$stat
 ```
 
 ```
-## # A tibble: 12 × 6
-##    model key                                 UE              VPA stat          p
-##    <chr> <chr>               <list<tibble[,9]>> <list<tibble[,9> <list>    <dbl>
-##  1 gram1 1-2.5 m vs. 2.5-4 m            [5 × 9]          [8 × 9] <htest> 0.0754 
-##  2 gram2 1-2.5 m vs. 2.5-4 m            [5 × 9]          [8 × 9] <htest> 0.508  
-##  3 gram3 1-2.5 m vs. 2.5-4 m            [5 × 9]          [8 × 9] <htest> 0.911  
-##  4 gram4 1-2.5 m vs. 2.5-4 m            [5 × 9]          [8 × 9] <htest> 0.816  
-##  5 gram5 1-2.5 m vs. 2.5-4 m            [5 × 9]          [8 × 9] <htest> 0.903  
-##  6 gram6 1-2.5 m vs. 2.5-4 m            [5 × 9]          [8 × 9] <htest> 0.690  
-##  7 gram1 2.5-4 m vs. 4-5.5 m            [5 × 9]          [6 × 9] <htest> 0.791  
-##  8 gram2 2.5-4 m vs. 4-5.5 m            [5 × 9]          [6 × 9] <htest> 1      
-##  9 gram3 2.5-4 m vs. 4-5.5 m            [5 × 9]          [6 × 9] <htest> 1      
-## 10 gram4 2.5-4 m vs. 4-5.5 m            [5 × 9]          [6 × 9] <htest> 0.0123 
-## 11 gram5 2.5-4 m vs. 4-5.5 m            [5 × 9]          [6 × 9] <htest> 0.0123 
-## 12 gram6 2.5-4 m vs. 4-5.5 m            [5 × 9]          [6 × 9] <htest> 0.00238
+## [[1]]
+## 
+## 	Brunner-Munzel Test
+## 
+## data:  x$jsd and y$jsd
+## Brunner-Munzel Test Statistic = -3.1238, df = 8.9437, p-value = 0.01234
+## 95 percent confidence interval:
+##  -0.1324509  0.3991176
+## sample estimates:
+## P(X<Y)+.5*P(X=Y) 
+##        0.1333333 
+## 
+## 
+## [[2]]
+## 
+## 	Brunner-Munzel Test
+## 
+## data:  x$jsd and y$jsd
+## Brunner-Munzel Test Statistic = -3.1238, df = 8.9437, p-value = 0.01234
+## 95 percent confidence interval:
+##  -0.1324509  0.3991176
+## sample estimates:
+## P(X<Y)+.5*P(X=Y) 
+##        0.1333333 
+## 
+## 
+## [[3]]
+## 
+## 	Brunner-Munzel Test
+## 
+## data:  x$jsd and y$jsd
+## Brunner-Munzel Test Statistic = -4.1906, df = 8.932, p-value = 0.002379
+## 95 percent confidence interval:
+##  -0.1161786  0.3161786
+## sample estimates:
+## P(X<Y)+.5*P(X=Y) 
+##              0.1
 ```
 
 ----
