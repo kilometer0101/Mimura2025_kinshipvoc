@@ -3,6 +3,7 @@ title: "Fig_3AB"
 output:
   html_document:
     keep_md: yes
+  pdf_document: default
 ---
 
 
@@ -129,7 +130,12 @@ g <-
     
   )
 
+g
+```
 
+![](Fig3_AB_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+```r
 ggsave("fig/Fig_003AB.png", width = 8, height = 4)
 ggsave("fig/Fig_003AB.svg", width = 8, height = 4)
 ```

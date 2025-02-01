@@ -35,6 +35,35 @@ dat_N <-
   mutate(n = map_dbl(data, nrow))
 ```
 
+
+```r
+dat_N %>% 
+  group_by(calltype, type) %>% 
+  summarise(n = sum(n)) %>% 
+  pivot_wider(
+    values_from = n,
+    names_from = type
+  )
+```
+
+```
+## # A tibble: 10 × 3
+## # Groups:   calltype [10]
+##    calltype     UE   VPA
+##    <chr>     <dbl> <dbl>
+##  1 chirp      1273  1498
+##  2 egg         203   416
+##  3 ock         770   647
+##  4 other       315    74
+##  5 peep       1224  4858
+##  6 phee        217   738
+##  7 trill      8164  6262
+##  8 trillphee   609   700
+##  9 tsik         84   607
+## 10 twitter       1    38
+```
+
+
 - visualization
 
 
@@ -50,7 +79,7 @@ dat_N %>%
   labs(y = "Calls/30 min")
 ```
 
-![](Fig_2C_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](Fig_2C_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
 ```r
@@ -69,7 +98,7 @@ dat_N %>%
   labs(y = "Calls/30 min")
 ```
 
-![](Fig_2C_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](Fig_2C_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 
 

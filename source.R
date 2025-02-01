@@ -13,6 +13,10 @@ theme_set(
           strip.background = element_rect(color = NA))
 )
 
+.calls <-
+  c("ock", "tsik", "egg", "phee", "peep", "trill", "trillphee", "chirp",
+    "twitter",   "other")
+
 arrange_ngram <- function(data, .bin = 30){
   data %>% 
     group_by(type, Name, Stage, Age, PW, PM) %>% 
@@ -124,37 +128,66 @@ sep_lowhigh <- function(dat, .key){
   return(dat_lowhigh)
 }
 
-lrt <- function (obj1, obj2) {
-  L0 <- logLik(obj1)
-  L1 <- logLik(obj2)
-  L01 <- as.vector(- 2 * (L0 - L1))
+lrt <- function (fit1, fit2) {
+  L0 <- logLik(fit1)
+  L1 <- logLik(fit2)
+  DevRes <- as.vector(- 2 * (L0 - L1))
   df <- attr(L1, "df") - attr(L0, "df")
-  list(L01 = L01, df = df,
-       "p-value" = pchisq(L01, df, lower.tail = FALSE))
+  list(L01 = DevRes, df = df,
+       "p-value" = pchisq(DevRes, df, lower.tail = FALSE))
 }
 
 
 list_model <-
   list(
     function(dat){ lm(n ~ 1, data = dat) }, #1
-    function(dat){ lmer(n ~ 1 + (PW|type), data = dat) }, #2
-    function(dat){ lmer(n ~ 1 + (PW|fm), data = dat) }, #3
-    function(dat){ lmer(n ~ 1 + (PW|Name), data = dat) }, #4
-    function(dat){ lmer(n ~ 1 + (PW|parents), data = dat) }, #5
+    function(dat){ lmer(n ~ 1 + (PM|type), data = dat) }, #2
+    function(dat){ lmer(n ~ 1 + (PM|fm), data = dat) }, #3
+    function(dat){ lmer(n ~ 1 + (PM|Name), data = dat) }, #4
+    function(dat){ lmer(n ~ 1 + (PM|parents), data = dat) }, #5
     function(dat){ lm(n ~ type, data = dat) }, #6
     function(dat){ lmer(n ~ type + (type|fm), data = dat) }, #7
     function(dat){ lmer(n ~ type + (type|Name), data = dat) }, #8
     function(dat){ lmer(n ~ type + (type|parents), data = dat) }, #9
-    function(dat){ lm(n ~ PW, data = dat) }, #10
-    function(dat){ lmer(n ~ PW + (PW|type), data = dat) }, #11
-    function(dat){ lmer(n ~ PW + (PW|fm), data = dat) }, #12
-    function(dat){ lmer(n ~ PW + (PW|Name), data = dat) }, #13
-    function(dat){ lmer(n ~ PW + (PW|parents), data = dat) }, #14
-    function(dat){ lm(n ~ PW + type + PW:type, data = dat) }, #15
-    function(dat){ lmer(n ~ PW + type + PW:type + (PW|fm), data = dat) }, #16
-    function(dat){ lmer(n ~ PW + type + PW:type + (PW|Name), data = dat) }, #17
-    function(dat){ lmer(n ~ PW + type + PW:type + (PW|parents), data = dat) }, #18
-    function(dat){ lmer(n ~ PW + type + PW:type + (type|fm), data = dat) }, #19
-    function(dat){ lmer(n ~ PW + type + PW:type + (type|Name), data = dat) }, #20
-    function(dat){ lmer(n ~ PW + type + PW:type + (type|parents), data = dat) }# , #21
+    function(dat){ lm(n ~ PM, data = dat) }, #10
+    function(dat){ lmer(n ~ PM + (PM|type), data = dat) }, #11
+    function(dat){ lmer(n ~ PM + (PM|fm), data = dat) }, #12
+    function(dat){ lmer(n ~ PM + (PM|Name), data = dat) }, #13
+    function(dat){ lmer(n ~ PM + (PM|parents), data = dat) }, #14
+    function(dat){ lm(n ~ PM + type + PM:type, data = dat) }, #15
+    function(dat){ lmer(n ~ PM + type + PM:type + (PM|fm), data = dat) }, #16
+    function(dat){ lmer(n ~ PM + type + PM:type + (PM|Name), data = dat) }, #17
+    function(dat){ lmer(n ~ PM + type + PM:type + (PM|parents), data = dat) }, #18
+    function(dat){ lmer(n ~ PM + type + PM:type + (type|fm), data = dat) }, #19
+    function(dat){ lmer(n ~ PM + type + PM:type + (type|Name), data = dat) }, #20
+    function(dat){ lmer(n ~ PM + type + PM:type + (type|parents), data = dat) }# , #21
    )
+
+
+
+gg_weight <- function(data){
+  ggplot(data) +
+    aes(PM, bw, color = type) +
+    geom_vline(xintercept = -0.5, linetype = "dotted") +
+    geom_point(alpha = 0.5, size = 0.2) +
+    geom_line(aes(group = key), alpha = 0.2) +
+    stat_smooth(method = "loess", span = 0.2, se = F) +
+    scale_color_manual(values = c(UE = "black", VPA = "red")) +
+    scale_x_continuous(breaks = -3:7) +
+    scale_y_continuous(limits = c(0.8, 1.2)) +
+    facet_wrap(~mf, ncol = 1, scales = "free_x") +
+    theme(axis.title.x = element_text(hjust = 1)) +
+    labs(y = "Scaled body weight")
+}
+
+gg_maha_bw <- function(data){
+  data%>% 
+    ggplot() +
+    aes(bw, y, color = type) +
+    geom_point(aes(shape = p_Name), alpha = 0.4) +
+    scale_color_manual(values = c(UE = "black", VPA = "red")) +
+    scale_x_continuous(limits = c(0.77, 1.2)) +
+    facet_wrap(~mf, ncol = 1, scales = "free_x") +
+    labs(x = "Scaled body weight",
+         y = "log10(Mahalanobis D)")
+}

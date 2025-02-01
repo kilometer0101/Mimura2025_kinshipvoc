@@ -99,13 +99,13 @@ dat_allN %>%
 .list_model <-
   list(
     function(dat){ lm(n ~ 1, data = dat) }, #1
-    function(dat){ lmer(n ~ 1 + (PW|fm), data = dat) }, #2
-    function(dat){ lmer(n ~ 1 + (PW|Name), data = dat) }, #3
-    function(dat){ lmer(n ~ 1 + (PW|parents), data = dat) }, #4
-    function(dat){ lm(n ~ PW, data = dat) }, #5
-    function(dat){ lmer(n ~ PW + (PW|fm), data = dat) }, #6
-    function(dat){ lmer(n ~ PW + (PW|Name), data = dat) }, #7
-    function(dat){ lmer(n ~ PW + (PW|parents), data = dat) } #8
+    function(dat){ lmer(n ~ 1 + (PM|fm), data = dat) }, #2
+    function(dat){ lmer(n ~ 1 + (PM|Name), data = dat) }, #3
+    function(dat){ lmer(n ~ 1 + (PM|parents), data = dat) }, #4
+    function(dat){ lm(n ~ PM, data = dat) }, #5
+    function(dat){ lmer(n ~ PM + (PM|fm), data = dat) }, #6
+    function(dat){ lmer(n ~ PM + (PM|Name), data = dat) }, #7
+    function(dat){ lmer(n ~ PM + (PM|parents), data = dat) } #8
   )
 ```
 
@@ -141,14 +141,14 @@ dat_fit %>%
 ## # A tibble: 8 × 3
 ##   modelid    UE   VPA
 ##     <dbl> <dbl> <dbl>
-## 1       1 29.0  23.4 
-## 2       2 21.8  20.6 
-## 3       3  7.90  7.25
-## 4       4 17.7   4.53
-## 5       5 24.0  25.4 
-## 6       6 14.5  17.3 
-## 7       7  0     3.41
-## 8       8 10.2   0
+## 1       1  31.9 26.2 
+## 2       2  24.6 23.6 
+## 3       3  10.7 10.0 
+## 4       4  20.5  7.30
+## 5       5  26.8 28.2 
+## 6       6  14.5 17.3 
+## 7       7   0    3.41
+## 8       8  10.3  0
 ```
 
 ```r
@@ -168,10 +168,10 @@ dat_minAIC
 
 ```
 ## # A tibble: 2 × 9
-##   modelid type                data model  fit         AIC  dAIC    a0       a1
-##     <dbl> <chr> <list<tibble[,7]>> <list> <list>    <dbl> <dbl> <dbl>    <dbl>
-## 1       7 UE              [46 × 7] <fn>   <lmerMod>  637.     0  536. -20.4   
-## 2       8 VPA             [63 × 7] <fn>   <lmerMod>  840.     0  254.  -0.0465
+##   modelid type                data model  fit         AIC  dAIC    a0      a1
+##     <dbl> <chr> <list<tibble[,7]>> <list> <list>    <dbl> <dbl> <dbl>   <dbl>
+## 1       7 UE              [46 × 7] <fn>   <lmerMod>  635.     0  534. -81.3  
+## 2       8 VPA             [63 × 7] <fn>   <lmerMod>  838.     0  254.  -0.186
 ```
 
 - regression
@@ -181,7 +181,7 @@ dat_minAIC
 dat_pred <-
   dat_minAIC %>% 
   unnest(data) %>% 
-  mutate(pred = a0 + PW * a1)
+  mutate(pred = a0 + PM * a1)
 ```
 
 - visualization
